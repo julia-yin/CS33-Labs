@@ -1,0 +1,57 @@
+CS33 Summer 2020
+Target 23
+Julia Yin, 005311394
+
+/* phase 1:
+- set return address of getbuf to address of touch1
+- return address is always stored right above (greater) than the stack space allocated to the called function, in this case getbuf requires 0x38 (56) bytes
+
+1. fill in the 56 bytes of getbuf with blanks (00 bytes)
+2. overwrite the return address to be the address of touch 1 by overwriting the buffer and editing the stack space above
+
+
+phase 2: 
+- set return address to touch2 but ensure that %rdi is the cookie when calling touch2
+- write code that moves cookie to %rdi, then return
+- store code to move cookie to %rdi somewhere in the stack
+
+1. write code to mov cookie value to rdi and return in phase2.s
+2. compile phase2.s using gcc -c phase2.s
+3. dissasemble the compiled code with objdump -d phase2.o > phase2.d
+4. copy the byte representation of the disassembled code
+5. place byte representation of code into buffer space and fill the rest with empty bytes
+6. replace return address with the address of the code (where rsp points to the code)
+7. write address of touch2 above the address of code so that the retq of code will go to touch2
+
+
+phase 3:
+- must set rdi to be a pointer to the cookie's string representation
+- call touch3 after setting rdi to pointer
+- string representation: cookie of 0x123 must read "123" in ASCII code format
+
+1. convert cookie to its string representation using man ascii
+2. figure out where cookie string will be placed (cannot be inside buffer space), will place it at the very top of stack after touch3 address is written so that line will never be called
+3. the address in the stack where cookie string is stored will be the pointer, write code that stores that location into rdi
+4. place the byte representation of that code (compile then disas) inside the buffer and fill the rest with 00 padding
+5. place the address of $rsp where it points to the injected code in buffer so that code will be run first (setting rdi to address of cookie string)
+6. write the address of touch3 so that the program will go to touch3 after injected code returns
+
+
+phase 4:
+- cannot write code directly into stack or the buffer due to other functions using stack space
+- must use provided gadgets (library functions written in code space)
+- see spec pdf for list of instructions and corresponding bytes
+
+1. find gadgets that will pop (read) a value off the stack and store into a register, then move from that register into desired register (rdi)
+2. found: popq %rax (58 90 c3) and movq %rax, %rdi (48 89 c7 c3)
+3. popq pops the "top" of stack which is the line directly above where the function is called, so the order must be:
+    - 0x38 bit buffer
+    - gadget 1: popq %rax
+    - cookie data
+    - gadget 2: movq %rax, %rdi
+    - address of touch2
+
+
+phase 5:
+
+*/

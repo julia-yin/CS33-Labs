@@ -1,22 +1,23 @@
 /*
- *  * Implementation of malloc with an explicit free list aka a doubly linked list of free blocks
- *   * using first-fit search. My implementation is adapted from the textbook's implementation of
- *    * an implicit list with the majority of the macros and helper functions referenced from the
- *     * textbook. I altered it so that an explicit free list is used instead for better performance.
- *      *
- *       * Each allocated block consists of a 4-byte header and footer that store the block's size and
- *        * allocation status, along with the payload. Each free block consists of a 4-byte header and
- *         * footer storing the size and allocation status, along with 4-byte next and previous pointers
- *          * that help form the explicit free list of free blocks. Thus, the minimum block size is 16 blocks,
- *           * as each free block must be at least 16 bytes to store the header, footer, and pointers.
- *            *
- *             * My implementation uses a pointer to the start of the free block list to help traverse.
- *              * Each free block is connected to the next and previous blocks on this list via 4-byte
- *               * pointers stored in the payload area of each free block. When a block that "fits" an allocation
- *                * request is found, it is then removed from the explicit free list by updating the next and
- *                 * previous pointers of the blocks directly next to it. When a block is added to the free list,
- *                  * it is added to the very beginning of the list, and the start pointer is updated accordingly.
- *                   */
+ * Implementation of malloc with an explicit free list aka a doubly linked list of free blocks
+ * using first-fit search. My implementation is adapted from the textbook's implementation of
+ * an implicit list with the majority of the macros and helper functions referenced from the
+ * textbook. I altered it so that an explicit free list is used instead for better performance.
+ *
+ * Each allocated block consists of a 4-byte header and footer that store the block's size and
+ * allocation status, along with the payload. Each free block consists of a 4-byte header and
+ * footer storing the size and allocation status, along with 4-byte next and previous pointers
+ * that help form the explicit free list of free blocks. Thus, the minimum block size is 16 blocks,
+ * as each free block must be at least 16 bytes to store the header, footer, and pointers.
+ * 
+ * My implementation uses a pointer to the start of the free block list to help traverse.
+ * Each free block is connected to the next and previous blocks on this list via 4-byte
+ * pointers stored in the payload area of each free block. When a block that "fits" an allocation
+ * request is found, it is then removed from the explicit free list by updating the next and
+ * previous pointers of the blocks directly next to it. When a block is added to the free list,
+ * it is added to the very beginning of the list, and the start pointer is updated accordingly.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -27,9 +28,9 @@
 #include "memlib.h"
 
 /*********************************************************
- *  *  *  * NOTE TO STUDENTS: Before you do anything else, please
- *   *   *   * provide your team information in the following struct.
- *    *    *    ********************************************************/
+ * NOTE TO STUDENTS: Before you do anything else, please
+ * provide your team information in the following struct.
+ *********************************************************/
 team_t team = {
     /* Team name */
     "ID: 005311394",
@@ -95,15 +96,14 @@ static void insert_into_free_list(void *bp); /* inserts block bp into the free l
 static void remove_from_free_list(void *bp); /* removes the block bp from the free list */
 
 
-/*
- *  * Function: mm_init
- *   * Checks: returns NULL if initializing or extending the heap gives an error.
- *    * 1. Initialize the memory manager by extending the heap by 16 bytes for the
- *     *    4-byte alignment padding, 8-byte prologue and 4-byte epilogue
- *      * 2. Set the heap_listp pointer to point to the beginning of the heap, directly
- *       *    after the prologue header.
- *        * 3. Extend the heap by CHUNKSIZE (4k bytes).
- *         */
+/* Function: mm_init
+ * Checks: returns NULL if initializing or extending the heap gives an error.
+ * 1. Initialize the memory manager by extending the heap by 16 bytes for the
+ *    4-byte alignment padding, 8-byte prologue and 4-byte epilogue
+ * 2. Set the heap_listp pointer to point to the beginning of the heap, directly
+ *    after the prologue header.
+ * 3. Extend the heap by CHUNKSIZE (4k bytes).
+ */
 int mm_init(void)
 {
     free_list_startp = NULL;
@@ -123,18 +123,17 @@ int mm_init(void)
     return 0;
 }
 
-/*
- *  * Function: mm_malloc
- *   * Checks: returns NULL if the size = 0, or if extending the heap by the
- *    *         extend size gives an error.
- *     * 1. Takes a parameter of size and adjusts it to include the overhead and
- *      *    alignment requirements (multiple of 8 bytes).
- *       * 2. If the free list is nonempty, search the free list for a block that is
- *        *    sufficiently large and place the new allocated size into the free block.
- *         * 3. If no free block is found, extend the heap by extendsize and place the
- *          *    new block into the extended region.
- *           * 4. Return a pointer to the start of the newly allcoated block.
- *            */
+/* Function: mm_malloc
+ * Checks: returns NULL if the size = 0, or if extending the heap by the
+ *         extend size gives an error.
+ * 1. Takes a parameter of size and adjusts it to include the overhead and
+ *    alignment requirements (multiple of 8 bytes).
+ * 2. If the free list is nonempty, search the free list for a block that is
+ *    sufficiently large and place the new allocated size into the free block.
+ * 3. If no free block is found, extend the heap by extendsize and place the
+ *    new block into the extended region.
+ * 4. Return a pointer to the start of the newly allcoated block.
+ */
 void *mm_malloc(size_t size)
 {
     size_t asize;      /* Adjusted block size */
@@ -165,14 +164,13 @@ void *mm_malloc(size_t size)
     return bp;
 }
 
-/*
- *  * Function: m_free
- *   * Checks: return 0 if the block bp has allocation bit set to 0.
- *    * 1. Free the block by changing the allocation bit in the header
- *     *    and footer to 0.
- *      * 2. Call coalesce, which will either add the newly freed block to
- *       *    the free list or coalesce with nearby blocks.
- *        */
+/* Function: m_free
+ * Checks: return 0 if the block bp has allocation bit set to 0.
+ * 1. Free the block by changing the allocation bit in the header
+ *    and footer to 0.
+ * 2. Call coalesce, which will either add the newly freed block to
+ *    the free list or coalesce with nearby blocks.
+ */
 void mm_free(void *bp)
 {
     if (GET_ALLOC(HDRP(bp)) == 0)
@@ -185,19 +183,18 @@ void mm_free(void *bp)
     coalesce(bp); /* coalesce will add the newly freed block to the linked list */
 }
 
-/*
- *  * Function: coalesce
- *   * Checks: four different cases
- *    * 1. If next and prev blocks are both allocated, insert bp into the free list
- *     *    and return a pointer to bp.
- *      * 2. If next is free, remove the next block from the free list and update bp's
- *       *    header and next's footer with the new size. Add bp to the free list and return
- *        *    a pointer to bp.
- *         * 3. If prev is free, update the header of the previous block to the new size.
- *          *    Update the footer of bp. Point bp to the previous block and return a pointer to bp.
- *           * 4. If both next and prev are free, remove next from the free list and update prev's
- *            *    header and next's footer with the new size. Point bp to prev and return a pointer to bp.
- *             */
+/* Function: coalesce
+ * Checks: four different cases
+ * 1. If next and prev blocks are both allocated, insert bp into the free list
+ *    and return a pointer to bp.
+ * 2. If next is free, remove the next block from the free list and update bp's
+ *    header and next's footer with the new size. Add bp to the free list and return
+ *    a pointer to bp.
+ * 3. If prev is free, update the header of the previous block to the new size.
+ *    Update the footer of bp. Point bp to the previous block and return a pointer to bp.
+ * 4. If both next and prev are free, remove next from the free list and update prev's
+ *    header and next's footer with the new size. Point bp to prev and return a pointer to bp.
+ */
 static void *coalesce(void *bp)
 {
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
@@ -239,15 +236,14 @@ static void *coalesce(void *bp)
     return bp; /* bp points to the very beginning of the coalesced block (prev for cases 3-4) */
 }
 
-/*
- *  * Function: mm_realloc
- *   * Checks: If size = 0, free the block bp. If bp = NULL, allocate a block of the
- *    *         right size.
- *     * 1. Allocate a new block of desired new size, and if it fails, return NULL.
- *      * 2. Copy over the data from the old block to the new block. If the new size is
- *       *    smaller, copy in as much as will fit.
- *        * 3. Free the old block. Return a pointer to the new block of new size.
- *         */
+/* Function: mm_realloc
+ * Checks: If size = 0, free the block bp. If bp = NULL, allocate a block of the
+ *         right size.
+ * 1. Allocate a new block of desired new size, and if it fails, return NULL.
+ * 2. Copy over the data from the old block to the new block. If the new size is
+ *    smaller, copy in as much as will fit.
+ * 3. Free the old block. Return a pointer to the new block of new size.
+ */
 void *mm_realloc(void *bp, size_t size)
 {
     size_t oldsize;
@@ -286,28 +282,27 @@ void *mm_realloc(void *bp, size_t size)
     return newbp;
 }
 
-/*
- *  * Function: mm_check
- *   * Description: Checks for the below errors. Returns -1 if any error is present after
- *    *              checking through all the possible errors.
- *     * 1. Check that the prologue header/footer stores a size of 16 bytes and marked as allocated.
- *      * 2. Check that each block's pointer is aligned to 8 bytes (last 3 bits are 0)
- *       * 3. Check that each block is a multiple of 8 bytes and is at least 16 bytes in size to
- *        *    maintain alignment.
- *         * 4. Check that each block's header matches its footer.
- *          * 5. Check that all free blocks are on the free list, and all allocated blocks aren't on the
- *           *    free list.
- *            * 6. Check that all free blocks do not have a free block right in front of it (prev != free)
- *             *     A) Uses a local variable prev_free that stores a 1 if the previous block was free. Checks
- *              *        against the current block's allocation bit
- *               * 7. Check that the epilogue is of size 0 and marked as allocated.
- *                *
- *                 * Checkheap can be called before and after functions mm_malloc, mm_realloc, and mm_init for the
- *                  * most accurate results. Calling checkheap within functions place, coalesce, extend_heap, or
- *                   * find_fit may result in false errors as those functions are necessary to return the heap back to
- *                    * a fully-functioning state. The print messages are designed to narrow down possible errors and
- *                     * give detailed information about which block contained the error.
- *                      */
+/* Function: mm_check
+ * Description: Checks for the below errors. Returns -1 if any error is present after
+ *              checking through all the possible errors.
+ * 1. Check that the prologue header/footer stores a size of 16 bytes and marked as allocated.
+ * 2. Check that each block's pointer is aligned to 8 bytes (last 3 bits are 0)
+ * 3. Check that each block is a multiple of 8 bytes and is at least 16 bytes in size to
+ *    maintain alignment.
+ * 4. Check that each block's header matches its footer.
+ * 5. Check that all free blocks are on the free list, and all allocated blocks aren't on the
+ *    free list.
+ * 6. Check that all free blocks do not have a free block right in front of it (prev != free)
+ *     A) Uses a local variable prev_free that stores a 1 if the previous block was free. Checks
+ *        against the current block's allocation bit
+ * 7. Check that the epilogue is of size 0 and marked as allocated.
+ *
+ * Checkheap can be called before and after functions mm_malloc, mm_realloc, and mm_init for the
+ * most accurate results. Calling checkheap within functions place, coalesce, extend_heap, or
+ * find_fit may result in false errors as those functions are necessary to return the heap back to
+ * a fully-functioning state. The print messages are designed to narrow down possible errors and
+ * give detailed information about which block contained the error.
+ */
 static int mm_check()
 {
     char *bp = 0;
@@ -385,17 +380,16 @@ static int mm_check()
 
 /* Helper Functions */
 
-/*
- *  * Function: extend_heap
- *   * 1. Adjust size (in words) to an even number to help maintain alignment
- *    * 2. Call mem_sbrk (library function) to extend the heap by size bytes. If this
- *     *    fails, return NULL.
- *      * 3. Set the new free block's header and footer with the new size. The header is the
- *       *    epilogue of the old heap.
- *        * 4. Set the new epilogue header with size 0 and allocation bit 1.
- *         * 5. Coalesce the new block if the previous block was free.
- *          * 6. Return a pointer to the new block.
- *           */
+/* Function: extend_heap
+ * 1. Adjust size (in words) to an even number to help maintain alignment
+ * 2. Call mem_sbrk (library function) to extend the heap by size bytes. If this
+ *    fails, return NULL.
+ * 3. Set the new free block's header and footer with the new size. The header is the
+ *    epilogue of the old heap.
+ * 4. Set the new epilogue header with size 0 and allocation bit 1.
+ * 5. Coalesce the new block if the previous block was free.
+ * 6. Return a pointer to the new block.
+ */
 static void *extend_heap(size_t words)
 {
     char *bp;
@@ -417,26 +411,24 @@ static void *extend_heap(size_t words)
     return bp;
 }
 
-/*
- *  * Function: place
- *   * Checks: two cases (split and no split)
- *    * 1. If the difference between the desired size and free block size is greater than minimum
- *     *    block size (16 bytes), split the block.
- *      *     A) Update the header and new footer of the free block with the desired size.
- *       *     B) Remove the current block from the free list. Move the block pointer to point to the next
- *        *        block, aka the remainder block.
- *         *     C) Update the header and footer of the remainder block to the remainder size. If place was
- *          *        called after extend_heap (coal = 1), call coalesce. If place was called after find_fit (coal = 0),
- *           *        simply insert the block into the free list.
- *            * 2. Otherwise, allocate the block by updating the header and footer and remove it from the free list.
- *             */
+/* Function: place
+ * Checks: two cases (split and no split)
+ * 1. If the difference between the desired size and free block size is greater than minimum
+ *    block size (16 bytes), split the block.
+ *    A) Update the header and new footer of the free block with the desired size.
+ *    B) Remove the current block from the free list. Move the block pointer to point to the next
+ *       block, aka the remainder block.
+ *    C) Update the header and footer of the remainder block to the remainder size. If place was
+ *       called after extend_heap (coal = 1), call coalesce. If place was called after find_fit (coal = 0),
+ *       simply insert the block into the free list.
+ * 2. Otherwise, allocate the block by updating the header and footer and remove it from the free list.
+ */
 static void place(void *bp, size_t asize, char coal)
 {
     size_t csize = GET_SIZE(HDRP(bp));
 
     /* if remainder is greater than or equal to minimum block size, split the free block into
- *      * the allocated portion and the free portion
- *           */
+       the allocated portion and the free portion */
     if ((csize - asize) >= (2*DSIZE)) {
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
@@ -475,16 +467,15 @@ static void *find_fit(size_t asize)
     return NULL; /* No fit */
 }
 
-/*
- *  * Function: insert_into_free_list
- *   * Description: Inserts a newly freed block bp into the beginning of the free list.
- *    * 1. Set the next and previous pointers of the current block bp to point to the current free
- *     *    list start and NULL respectively.
- *      * 2. If the current free_list_startp is NULL, the free list is currently empty. Update the start
- *       *    pointer to point to bp and return.
- *        * 3. Otherwise, update the current start pointer's prev to point to block bp. Update the start
- *         *    pointer to point to bp as the new start of the free list.
- *          */
+/* Function: insert_into_free_list
+ * Description: Inserts a newly freed block bp into the beginning of the free list.
+ * 1. Set the next and previous pointers of the current block bp to point to the current free
+ *    list start and NULL respectively.
+ * 2. If the current free_list_startp is NULL, the free list is currently empty. Update the start
+ *    pointer to point to bp and return.
+ * 3. Otherwise, update the current start pointer's prev to point to block bp. Update the start
+ *    pointer to point to bp as the new start of the free list.
+ */
 static void insert_into_free_list(void *bp)
 {
     SET_NEXT(bp, free_list_startp); /* bp comes before current start block */
@@ -500,15 +491,14 @@ static void insert_into_free_list(void *bp)
     free_list_startp = bp;          /* point start pointer to bp which is new start */
 }
 
-/*
- *  * Function: remove_from_free_list
- *   * Checks: three cases (first block, last block, middle block)
- *    * 1. If bp is the first block in the list, set the start pointer to point to the next block.
- *     *    If bp is the only block on the list, set the previous pointer of the start block to NULL.
- *      * 2. If bp is the last block in the list, set the next pointer of the previous block to NULL.
- *       * 3. If bp is neither the first nor last block, update the next pointer of the previous block to
- *        *    point to bp's next. Update the prev pointer of the next block to bp's prev.
- *        */
+/* Function: remove_from_free_list
+ * Checks: three cases (first block, last block, middle block)
+ * 1. If bp is the first block in the list, set the start pointer to point to the next block.
+ *    If bp is the only block on the list, set the previous pointer of the start block to NULL.
+ * 2. If bp is the last block in the list, set the next pointer of the previous block to NULL.
+ * 3. If bp is neither the first nor last block, update the next pointer of the previous block to
+ *    point to bp's next. Update the prev pointer of the next block to bp's prev.
+ */
 static void remove_from_free_list(void *bp)
 {
     /* Case 1: bp is the first block in the list */
@@ -524,12 +514,10 @@ static void remove_from_free_list(void *bp)
     /* Case 3: bp is somewhere in the list */
     else {
         /* set the next pointer of the prev block to next of current block (essentially
- *          * removing current block from list)
- *                   */
+           removing current block from list) */
         SET_NEXT(GET_PREV(bp), GET_NEXT(bp));
         /* set prev pointer of next block to current prev (NULL if current bp is at front of
- *          * list)
- *                   */
+           list) */
         SET_PREV(GET_NEXT(bp), GET_PREV(bp));
     }
 }
